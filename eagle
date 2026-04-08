@@ -1,222 +1,137 @@
--- Forky Hub Animated Auth + Junkie Key System
+-- ══════════════════════════════════════════════════════════════
+-- SECTION -1 : JUNKIE KEY SYSTEM (AUTH) WITH ANIMATION
+-- ══════════════════════════════════════════════════════════════
 
 local Junkie = loadstring(game:HttpGet("https://jnkie.com/sdk/library.lua"))()
 Junkie.service = "ForkyCrack"
 Junkie.identifier = "14086"
 Junkie.provider = "Forky Premium"
 
-local authResult = (function()
-
-getgenv().UI_CLOSED = false
-
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local Lighting = game:GetService("Lighting")
-local RunService = game:GetService("RunService")
-
-local Colors = {
-background = Color3.fromRGB(15,15,20),
-primary = Color3.fromRGB(0,122,255),
-secondary = Color3.fromRGB(175,82,222),
-success = Color3.fromRGB(52,199,89),
-error = Color3.fromRGB(255,59,48),
-white = Color3.fromRGB(255,255,255),
-textDim = Color3.fromRGB(150,150,165),
-border = Color3.fromRGB(50,50,65),
-}
+getgenv().SCRIPT_KEY = getgenv().SCRIPT_KEY or ""
 
 local function handleKick(reason)
-local lp = Players.LocalPlayer
-if lp then
-lp:Kick("\n[Forky Hub]\n"..(reason or "Access Denied"))
-else
-game:Shutdown()
-end
-end
-
--- UI
-local Screen = Instance.new("ScreenGui")
-Screen.Name = "ForkyAuthUI"
-Screen.IgnoreGuiInset = true
-Screen.DisplayOrder = 9999
-Screen.Parent = game:GetService("CoreGui")
-
-local Blur = Instance.new("BlurEffect")
-Blur.Size = 0
-Blur.Parent = Lighting
-
-local Container = Instance.new("CanvasGroup")
-Container.AnchorPoint = Vector2.new(0.5,0.5)
-Container.Position = UDim2.new(0.5,0,0.5,0)
-Container.Size = UDim2.new(0,360,0,200)
-Container.BackgroundColor3 = Colors.background
-Container.BackgroundTransparency = 0.15
-Container.GroupTransparency = 1
-Container.Parent = Screen
-
-Instance.new("UICorner",Container).CornerRadius = UDim.new(0,28)
-
-local Stroke = Instance.new("UIStroke")
-Stroke.Color = Colors.border
-Stroke.Thickness = 2
-Stroke.Transparency = 0.4
-Stroke.Parent = Container
-
-local Logo = Instance.new("ImageLabel")
-Logo.AnchorPoint = Vector2.new(0.5,0.5)
-Logo.Position = UDim2.new(0.5,0,0,60)
-Logo.Size = UDim2.new(0,80,0,80)
-Logo.BackgroundTransparency = 1
-Logo.Image = "rbxassetid://113844030610691"
-Logo.Parent = Container
-
-local OrbitContainer = Instance.new("Frame")
-OrbitContainer.AnchorPoint = Vector2.new(0.5,0.5)
-OrbitContainer.Position = UDim2.new(0.5,0,0,60)
-OrbitContainer.Size = UDim2.new(0,110,0,110)
-OrbitContainer.BackgroundTransparency = 1
-OrbitContainer.Parent = Container
-
-local function createOrbit(size,speed,color)
-
-local Orbit = Instance.new("Frame")
-Orbit.AnchorPoint = Vector2.new(0.5,0.5)
-Orbit.Position = UDim2.new(0.5,0,0.5,0)
-Orbit.Size = UDim2.new(0,size,0,size)
-Orbit.BackgroundTransparency = 1
-Orbit.Parent = OrbitContainer
-
-local Stroke = Instance.new("UIStroke")
-Stroke.Color = color
-Stroke.Thickness = 1.5
-Stroke.Transparency = 0.6
-Stroke.Parent = Orbit
-
-Instance.new("UICorner",Orbit).CornerRadius = UDim.new(1,0)
-
-local Dot = Instance.new("Frame")
-Dot.Size = UDim2.new(0,6,0,6)
-Dot.Position = UDim2.new(0.5,size/2,0.5,0)
-Dot.AnchorPoint = Vector2.new(0.5,0.5)
-Dot.BackgroundColor3 = color
-Dot.BorderSizePixel = 0
-Dot.Parent = Orbit
-
-Instance.new("UICorner",Dot).CornerRadius = UDim.new(1,0)
-
-task.spawn(function()
-local angle = 0
-while Orbit and Orbit.Parent do
-angle += speed
-Orbit.Rotation = angle
-RunService.RenderStepped:Wait()
-end
-end)
-
-return Orbit
-
+    local Players = game:GetService("Players")
+    local lp = Players.LocalPlayer
+    if lp then
+        lp:Kick("\n[Forky Hub]\n" .. (reason or "Access Denied"))
+    else
+        game:Shutdown()
+    end
 end
 
-local Ring1 = createOrbit(95,2,Colors.primary)
-local Ring2 = createOrbit(115,-1.5,Colors.secondary)
+local function runAuth()
+    local Players = game:GetService("Players")
+    local TweenService = game:GetService("TweenService")
+    local Lighting = game:GetService("Lighting")
+    local RunService = game:GetService("RunService")
+    local CoreGui = game:GetService("CoreGui")
 
-local Title = Instance.new("TextLabel")
-Title.Position = UDim2.new(0,0,0,115)
-Title.Size = UDim2.new(1,0,0,30)
-Title.BackgroundTransparency = 1
-Title.Text = "Forky Hub"
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 22
-Title.TextColor3 = Colors.white
-Title.Parent = Container
+    -- 1. Setup UI & Animation
+    local gui = Instance.new("ScreenGui", CoreGui)
+    gui.Name = "ForkyAuthUI"
+    gui.IgnoreGuiInset = true
+    
+    local blur = Instance.new("BlurEffect", Lighting)
+    blur.Size = 0
 
-local Status = Instance.new("TextLabel")
-Status.Position = UDim2.new(0,0,0,145)
-Status.Size = UDim2.new(1,0,0,20)
-Status.BackgroundTransparency = 1
-Status.Text = "Establishing Protocol"
-Status.TextColor3 = Colors.textDim
-Status.Font = Enum.Font.GothamMedium
-Status.TextSize = 14
-Status.Parent = Container
+    local main = Instance.new("CanvasGroup", gui)
+    main.AnchorPoint = Vector2.new(0.5, 0.5)
+    main.Position = UDim2.new(0.5, 0, 0.5, 0)
+    main.Size = UDim2.new(0, 350, 0, 180)
+    main.BackgroundColor3 = Color3.fromRGB(10, 10, 12)
+    main.GroupTransparency = 1
+    Instance.new("UICorner", main).CornerRadius = UDim.new(0, 24)
+    
+    local status = Instance.new("TextLabel", main)
+    status.Position = UDim2.new(0, 0, 0, 130)
+    status.Size = UDim2.new(1, 0, 0, 20)
+    status.BackgroundTransparency = 1
+    status.Text = "Initializing..."
+    status.TextColor3 = Color3.fromRGB(150, 150, 165)
+    status.Font = Enum.Font.GothamMedium
+    status.TextSize = 13
 
--- open animation
-TweenService:Create(Container,TweenInfo.new(0.8,Enum.EasingStyle.Quart),{
-GroupTransparency=0,
-Size=UDim2.new(0,360,0,200)
-}):Play()
+    -- Orbital Rings
+    local orbitCont = Instance.new("Frame", main)
+    orbitCont.Position = UDim2.new(0.5, 0, 0, 55)
+    orbitCont.BackgroundTransparency = 1
 
-TweenService:Create(Blur,TweenInfo.new(1),{
-Size=28
-}):Play()
+    local function createRing(size, speed, color)
+        local r = Instance.new("Frame", orbitCont)
+        r.AnchorPoint = Vector2.new(0.5, 0.5)
+        r.Size = UDim2.new(0, size, 0, size)
+        r.BackgroundTransparency = 1
+        local st = Instance.new("UIStroke", r)
+        st.Color = color
+        st.Transparency = 0.5
+        Instance.new("UICorner", r).CornerRadius = UDim.new(1,0)
+        task.spawn(function()
+            local a = 0
+            while r and r.Parent do
+                a = a + speed
+                r.Rotation = a
+                RunService.RenderStepped:Wait()
+            end
+        end)
+    end
+    createRing(75, 2.5, Color3.fromRGB(0, 225, 255))
+    createRing(95, -1.8, Color3.fromRGB(0, 100, 255))
 
--- key check
-local key = getgenv().SCRIPT_KEY
+    -- 2. Start Entrance
+    TweenService:Create(main, TweenInfo.new(0.6), {GroupTransparency = 0}):Play()
+    TweenService:Create(blur, TweenInfo.new(0.6), {Size = 20}):Play()
+    task.wait(0.8)
 
-if not key or key=="" then
-Status.Text = "SCRIPT_KEY Missing"
-Status.TextColor3 = Colors.error
-task.wait(2)
-handleKick("No license key provided")
-return nil
+    -- 3. Logic Auth Junkie
+    local key = getgenv().SCRIPT_KEY
+    if not key or key == "" then
+        status.Text = "Error: Key Missing!"
+        status.TextColor3 = Color3.fromRGB(255, 59, 48)
+        task.wait(2)
+        handleKick("No license key provided.")
+        return false
+    end
+
+    status.Text = "Verifying License..."
+    local result = Junkie.check_key(key)
+
+    if result and result.valid then
+        status.Text = "Access Granted!"
+        status.TextColor3 = Color3.fromRGB(52, 199, 89)
+        task.wait(1)
+        
+        -- Closing Anim
+        TweenService:Create(main, TweenInfo.new(0.5), {GroupTransparency = 1}):Play()
+        TweenService:Create(blur, TweenInfo.new(0.5), {Size = 0}):Play()
+        task.wait(0.5)
+        gui:Destroy()
+        blur:Destroy()
+        return true
+    else
+        local raw = result and result.message or "UNKNOWN"
+        status.Text = "Error: " .. raw
+        status.TextColor3 = Color3.fromRGB(255, 59, 48)
+        task.wait(2)
+        
+        if raw:find("invalid") then handleKick("Key Invalid")
+        elseif raw:find("expire") then handleKick("Key Expired")
+        elseif raw:find("hwid") then handleKick("HWID Mismatch")
+        else handleKick("Error: "..raw) end
+        
+        return false
+    end
 end
 
-Status.Text = "Synchronizing Hardware..."
-task.wait(1)
-
-local result = Junkie.check_key(key)
-
-if result and result.valid then
-
-Status.Text = "License Key Verified"
-Status.TextColor3 = Colors.success
-
-TweenService:Create(Logo,TweenInfo.new(0.6,Enum.EasingStyle.Back),{
-Size=UDim2.new(0,90,0,90)
-}):Play()
-
-task.wait(1.5)
-
-TweenService:Create(Container,TweenInfo.new(0.6,Enum.EasingStyle.Quart),{
-GroupTransparency=1,
-Size=UDim2.new(0,320,0,180)
-}):Play()
-
-TweenService:Create(Blur,TweenInfo.new(0.6),{
-Size=0
-}):Play()
-
-task.wait(0.6)
-
-Screen:Destroy()
-getgenv().UI_CLOSED = true
-
-return key
-
-else
-
-Status.Text = "Invalid Key"
-Status.TextColor3 = Colors.error
-
-task.wait(2.5)
-handleKick("Authentication Failed")
-
-return nil
-
+-- MENJALANKAN AUTH
+if not runAuth() then
+    return
 end
 
-end)()
+print("✔ Auth success, lanjut loading script...")
 
--- MAIN SCRIPT START
-if authResult then
-
-repeat task.wait() until getgenv().UI_CLOSED == true
-
-print("Executing Main Script...")
-
--- taruh script kamu disini
-
-end
+-- ══════════════════════════════════════════════════════════════
+-- PASANG SCRIPT UTAMA (WINDUI / FARM) DI BAWAH INI:
+-- ══════════════════════════════════════════════════════════════
 --[[
  ╔══════════════════════════════════════════════════════════════╗
  ║  Forky — Eagle Nation AutoFarm                              ║
