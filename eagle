@@ -1,131 +1,61 @@
+-- ══════════════════════════════════════════════════════════════
+-- SECTION -1 : JUNKIE KEY SYSTEM (AUTH)
+-- ══════════════════════════════════════════════════════════════
+
 local Junkie = loadstring(game:HttpGet("https://jnkie.com/sdk/library.lua"))()
 Junkie.service = "ForkyCrack"
 Junkie.identifier = "14086"
 Junkie.provider = "Forky Premium"
 
--- Pagar Global
-getgenv().UI_CLOSED = false
+getgenv().SCRIPT_KEY = getgenv().SCRIPT_KEY or "" -- isi manual kalau mau
 
-local function startAuth()
+local function handleKick(reason)
     local Players = game:GetService("Players")
-    local TweenService = game:GetService("TweenService")
-    local Lighting = game:GetService("Lighting")
-    local RunService = game:GetService("RunService")
-    
-    local Colors = {
-        background = Color3.fromRGB(15, 15, 20),
-        primary = Color3.fromRGB(0, 122, 255),
-        secondary = Color3.fromRGB(175, 82, 222),
-        success = Color3.fromRGB(52, 199, 89),
-        error = Color3.fromRGB(255, 59, 48),
-        white = Color3.fromRGB(255, 255, 255),
-        textDim = Color3.fromRGB(150, 150, 165),
-        border = Color3.fromRGB(50, 50, 65),
-    }
-
-    local function handleKick(reason)
-        local lp = Players.LocalPlayer
-        if lp then
-            lp:Kick("\n[Forky Hub]\n" .. (reason or "Access Denied"))
-        else
-            game:Shutdown()
-        end
+    local lp = Players.LocalPlayer
+    if lp then
+        lp:Kick("\n[Forky Hub]\n" .. (reason or "Access Denied"))
+    else
+        game:Shutdown()
     end
+end
 
-    -- Pembuatan UI (Tanpa Factory Berlapis agar tidak Error Table)
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "ForkyAuthUI"
-    gui.IgnoreGuiInset = true
-    gui.DisplayOrder = 9999
-    gui.Parent = game:GetService("CoreGui")
-
-    local blur = Instance.new("BlurEffect")
-    blur.Size = 0
-    blur.Parent = Lighting
-
-    local main = Instance.new("CanvasGroup")
-    main.AnchorPoint = Vector2.new(0.5, 0.5)
-    main.Position = UDim2.new(0.5, 0, 0.5, 0)
-    main.Size = UDim2.new(0, 360, 0, 200)
-    main.BackgroundColor3 = Colors.background
-    main.BackgroundTransparency = 0.15
-    main.GroupTransparency = 1
-    main.Parent = gui
-    Instance.new("UICorner", main).CornerRadius = UDim.new(0, 28)
-    
-    local stroke = Instance.new("UIStroke", main)
-    stroke.Color = Colors.border
-    stroke.Thickness = 2
-    stroke.Transparency = 0.5
-
-    local status = Instance.new("TextLabel", main)
-    status.Position = UDim2.new(0, 0, 0, 145)
-    status.Size = UDim2.new(1, 0, 0, 20)
-    status.BackgroundTransparency = 1
-    status.Text = "Initializing..."
-    status.TextColor3 = Colors.textDim
-    status.Font = Enum.Font.GothamMedium
-    status.TextSize = 14
-
-    local title = Instance.new("TextLabel", main)
-    title.Position = UDim2.new(0, 0, 0, 115)
-    title.Size = UDim2.new(1, 0, 0, 30)
-    title.BackgroundTransparency = 1
-    title.Text = "Forky Hub"
-    title.TextColor3 = Colors.white
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 22
-
-    -- Animation Entrance
-    TweenService:Create(main, TweenInfo.new(0.8), {GroupTransparency = 0}):Play()
-    TweenService:Create(blur, TweenInfo.new(1), {Size = 25}):Play()
-
-    -- Pengecekan Key
+local function runAuth()
     local key = getgenv().SCRIPT_KEY
+    
     if not key or key == "" then
-        status.Text = "Critical: SCRIPT_KEY Missing"
-        status.TextColor3 = Colors.error
-        task.wait(2)
-        handleKick("No License Key Provided")
+        warn("SCRIPT_KEY kosong!")
+        handleKick("No license key provided.")
         return false
     end
 
-    status.Text = "Synchronizing Hardware..."
-    task.wait(1.5)
-
     local result = Junkie.check_key(key)
-    
+
     if result and result.valid then
-        status.Text = "License Verified!"
-        status.TextColor3 = Colors.success
-        task.wait(1)
-        
-        -- Closing Animation
-        TweenService:Create(main, TweenInfo.new(0.6), {GroupTransparency = 1}):Play()
-        TweenService:Create(blur, TweenInfo.new(0.6), {Size = 0}):Play()
-        task.wait(0.6)
-        
-        gui:Destroy()
-        getgenv().UI_CLOSED = true
+        print("✔ Key valid:", result.message)
         return true
     else
-        local raw = result and result.message or "CONNECTION_ERROR"
-        status.Text = "Error: " .. raw
-        status.TextColor3 = Colors.error
-        task.wait(2.5)
-        handleKick(raw)
+        local raw = result and result.message or "UNKNOWN"
+
+        if raw:find("invalid") then
+            handleKick("Key Invalid")
+        elseif raw:find("expire") then
+            handleKick("Key Expired")
+        elseif raw:find("hwid") then
+            handleKick("HWID Mismatch")
+        else
+            handleKick("Error: "..raw)
+        end
+
         return false
     end
 end
 
--- MENJALANKAN AUTH
-if startAuth() then
-    -- TUNGGU SAMPAI UI BENAR-BENAR HILANG
-    repeat task.wait() until getgenv().UI_CLOSED == true
-    
-    -- ==========================================
-    -- TEMPEL KODE UTAMA (WINDUI / FARM) DI SINI
-    -- ==========================================
+-- STOP SCRIPT KALAU GAGAL AUTH
+if not runAuth() then
+    return
+end
+
+print("✔ Auth success, lanjut loading script...")
 --[[
  ╔══════════════════════════════════════════════════════════════╗
  ║  Forky — Eagle Nation AutoFarm                              ║
