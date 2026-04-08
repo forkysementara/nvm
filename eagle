@@ -7,7 +7,8 @@ Junkie.service = "ForkyCrack"
 Junkie.identifier = "14086"
 Junkie.provider = "Forky Premium"
 
-getgenv().SCRIPT_KEY = getgenv().SCRIPT_KEY or ""
+-- Mengambil variabel 'key' yang diketik user di executor
+local userKey = _G.key or key or getgenv().key
 
 local function handleKick(reason)
     local Players = game:GetService("Players")
@@ -46,12 +47,12 @@ local function runAuth()
     status.Position = UDim2.new(0, 0, 0, 130)
     status.Size = UDim2.new(1, 0, 0, 20)
     status.BackgroundTransparency = 1
-    status.Text = "Initializing..."
+    status.Text = "Connecting Protocol..."
     status.TextColor3 = Color3.fromRGB(150, 150, 165)
     status.Font = Enum.Font.GothamMedium
     status.TextSize = 13
 
-    -- Orbital Rings
+    -- Orbital Rings (Animasi Lingkaran)
     local orbitCont = Instance.new("Frame", main)
     orbitCont.Position = UDim2.new(0.5, 0, 0, 55)
     orbitCont.BackgroundTransparency = 1
@@ -77,23 +78,22 @@ local function runAuth()
     createRing(75, 2.5, Color3.fromRGB(0, 225, 255))
     createRing(95, -1.8, Color3.fromRGB(0, 100, 255))
 
-    -- 2. Start Entrance
+    -- 2. Entrance Transition
     TweenService:Create(main, TweenInfo.new(0.6), {GroupTransparency = 0}):Play()
     TweenService:Create(blur, TweenInfo.new(0.6), {Size = 20}):Play()
     task.wait(0.8)
 
     -- 3. Logic Auth Junkie
-    local key = getgenv().SCRIPT_KEY
-    if not key or key == "" then
-        status.Text = "Error: Key Missing!"
+    if not userKey or userKey == "" then
+        status.Text = "Error: Key Variable Missing!"
         status.TextColor3 = Color3.fromRGB(255, 59, 48)
         task.wait(2)
-        handleKick("No license key provided.")
+        handleKick("No 'key' found. Example: key = 'YOUR_KEY'")
         return false
     end
 
     status.Text = "Verifying License..."
-    local result = Junkie.check_key(key)
+    local result = Junkie.check_key(userKey)
 
     if result and result.valid then
         status.Text = "Access Granted!"
@@ -108,29 +108,24 @@ local function runAuth()
         blur:Destroy()
         return true
     else
-        local raw = result and result.message or "UNKNOWN"
-        status.Text = "Error: " .. raw
+        local raw = result and result.message or "CONNECTION_ERROR"
+        status.Text = "Auth Error: " .. raw
         status.TextColor3 = Color3.fromRGB(255, 59, 48)
         task.wait(2)
-        
-        if raw:find("invalid") then handleKick("Key Invalid")
-        elseif raw:find("expire") then handleKick("Key Expired")
-        elseif raw:find("hwid") then handleKick("HWID Mismatch")
-        else handleKick("Error: "..raw) end
-        
+        handleKick(raw)
         return false
     end
 end
 
--- MENJALANKAN AUTH
+-- Jalankan Pengecekan
 if not runAuth() then
     return
 end
 
-print("✔ Auth success, lanjut loading script...")
+print("✔ Auth Success!")
 
 -- ══════════════════════════════════════════════════════════════
--- PASANG SCRIPT UTAMA (WINDUI / FARM) DI BAWAH INI:
+-- TARUH SCRIPT UTAMA/FITUR KAMU DI BAWAH SINI
 -- ══════════════════════════════════════════════════════════════
 --[[
  ╔══════════════════════════════════════════════════════════════╗
